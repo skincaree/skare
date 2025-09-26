@@ -41,6 +41,8 @@
             allCategories: "كل الأقسام",
             bucketNotFound_admin: "خطأ: حاوية تخزين الصور 'products' غير موجودة. يرجى إنشائها من قسم Storage في لوحة تحكم Supabase.",
             shippingDetails: "معلومات التوصيل", selectCity: "ابحث عن مدينتك...", deliveryFee: "رسوم التوصيل", subtotal: "المجموع الفرعي", finalTotal: "المجموع النهائي", completeOrder: "تأكيد الطلب", pleaseFillShipping: "يرجى إكمال جميع بيانات التوصيل.",
+            // أكواد الخصم
+            coupons: "أكواد الخصم", applyCoupon: "تطبيق", couponCode: "كود الخصم", enterCoupon: "أدخل كود الخصم...", couponApplied: "تم تطبيق الخصم بنجاح!", invalidCoupon: "كود الخصم غير صالح أو منتهي الصلاحية.", couponUserLimitReached: "لقد استخدمت هذا الكود الحد الأقصى من المرات.", couponTotalLimitReached: "انتهى استخدام هذا الكود.", discount: "الخصم", manageCoupons: "إدارة أكواد الخصم", addCoupon: "إضافة كود جديد", discountPercentage: "نسبة الخصم (%)", maxUsers: "أقصى عدد للمستخدمين", usesPerUser: "الاستخدام لكل مستخدم",
             // لوحة التحكم
             adminPanel: "لوحة تحكم الأدمن", overview: "نظرة عامة", products: "المنتجات", categories: "الأقسام", users: "المستخدمون", analytics: "التحليلات", orders: "الطلبات", manageOrders: "إدارة الطلبات", orderStatus: "حالة الطلب", customerName: "اسم العميل", customerPhone: "هاتف العميل", city: "المدينة", newStatus: "جديد", shippedStatus: "تم الشحن", deliveredStatus: "تم التوصيل", updateStatus: "تحديث الحالة", orderDetails: "تفاصيل الطلب",
             manageProducts: "إدارة المنتجات", addProduct: "إضافة منتج جديد", productName: "اسم المنتج", productDesc: "وصف المنتج", price: "السعر", salePrice: "سعر العرض (اختياري)", imageUrl: "رابط الصورة", category: "القسم", save: "حفظ", cancel: "إلغاء", edit: "تعديل", delete: "حذف", confirmDelete: "هل أنت متأكد من الحذف؟", manageCategories: "إدارة الأقسام", addCategory: "إضافة قسم جديد", categoryName: "اسم القسم", manageUsers: "إدارة المستخدمين", userEmail: "البريد الإلكتروني", fullName: "الاسم الكامل", phone: "الهاتف", status: "الحالة", action: "الإجراء", block: "حظر", unblock: "إلغاء الحظر", active: "نشط", blocked: "محظور", salesAnalytics: "تحليلات المبيعات",
@@ -60,6 +62,8 @@
             allCategories: "All Categories",
             bucketNotFound_admin: "Error: Storage bucket 'products' not found. Please create it from the Storage section in your Supabase dashboard.",
             shippingDetails: "Shipping Details", selectCity: "Search for your city...", deliveryFee: "Delivery Fee", subtotal: "Subtotal", finalTotal: "Final Total", completeOrder: "Confirm Order", pleaseFillShipping: "Please complete all shipping details.",
+            // Discount Codes
+            coupons: "Discount Codes", applyCoupon: "Apply", couponCode: "Coupon Code", enterCoupon: "Enter coupon code...", couponApplied: "Coupon applied successfully!", invalidCoupon: "Invalid or expired coupon code.", couponUserLimitReached: "You have reached the usage limit for this coupon.", couponTotalLimitReached: "This coupon has reached its total usage limit.", discount: "Discount", manageCoupons: "Manage Coupons", addCoupon: "Add New Coupon", discountPercentage: "Discount Percentage (%)", maxUsers: "Max Users", usesPerUser: "Uses Per User",
             // Admin Dashboard
             adminPanel: "Admin Panel", overview: "Overview", products: "Products", categories: "Categories", users: "Users", analytics: "Analytics", orders: "Orders", manageOrders: "Manage Orders", orderStatus: "Order Status", customerName: "Customer Name", customerPhone: "Customer Phone", city: "City", newStatus: "New", shippedStatus: "Shipped", deliveredStatus: "Delivered", updateStatus: "Update Status", orderDetails: "Order Details",
             manageProducts: "Manage Products", addProduct: "Add New Product", productName: "Product Name", productDesc: "Product Description", price: "Price", salePrice: "Sale Price (Optional)", imageUrl: "Image URL", category: "Category", save: "Save", cancel: "Cancel", edit: "Edit", delete: "Delete", confirmDelete: "Are you sure you want to delete?", manageCategories: "Manage Categories", addCategory: "Add New Category", categoryName: "Category Name", manageUsers: "Manage Users", userEmail: "Email", fullName: "Full Name", phone: "Phone", status: "Status", action: "Action", block: "Block", unblock: "Unblock", active: "Active", blocked: "Blocked", salesAnalytics: "Sales Analytics",
@@ -212,6 +216,10 @@
             
             const [shippingInfo, setShippingInfo] = useState({ name: '', phone: '', city: '', detailedAddress: '' });
             const [selectedCityFee, setSelectedCityFee] = useState(0);
+            const [couponCodeInput, setCouponCodeInput] = useState('');
+            const [appliedCoupon, setAppliedCoupon] = useState(null);
+            const [discountAmount, setDiscountAmount] = useState(0);
+            const [couponError, setCouponError] = useState('');
 
             useEffect(() => {
                 if (user && supabase) {
@@ -233,7 +241,50 @@
             };
 
             const subtotal = useMemo(() => cart.reduce((sum, item) => sum + ((item.products?.sale_price || item.products?.price) * item.quantity), 0), [cart]);
-            const finalTotal = subtotal + selectedCityFee;
+            
+            const handleApplyCode = async () => {
+                if (!couponCodeInput) return;
+                setCouponError('');
+                
+                const { data: code, error } = await supabase
+                    .from('discount_codes')
+                    .select('*')
+                    .eq('code', couponCodeInput)
+                    .eq('is_active', true)
+                    .single();
+
+                if (error || !code) {
+                    setCouponError(t('invalidCoupon'));
+                    return;
+                }
+
+                const { count: totalUses, error: totalUsesError } = await supabase
+                    .from('used_codes')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('code_id', code.id);
+                
+                if (totalUses >= code.max_users) {
+                    setCouponError(t('couponTotalLimitReached'));
+                    return;
+                }
+                
+                const { count: userUses, error: userUsesError } = await supabase
+                    .from('used_codes')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('code_id', code.id)
+                    .eq('user_id', user.id);
+
+                if (userUses >= code.uses_per_user) {
+                    setCouponError(t('couponUserLimitReached'));
+                    return;
+                }
+                
+                setAppliedCoupon(code);
+                setDiscountAmount((subtotal * code.discount_percentage) / 100);
+                setNotification({ type: 'success', messageKey: 'couponApplied' });
+            };
+
+            const finalTotal = subtotal - discountAmount + selectedCityFee;
 
             const handleCheckout = async () => { 
                 if (!user) { setNotification({ type: 'error', messageKey: 'loginToCheckout' }); setPage('auth'); return; }
@@ -242,17 +293,22 @@
                     setNotification({ type: 'error', messageKey: 'pleaseFillShipping' }); return; 
                 }
                 
-                const { data, error } = await supabase.from('orders').insert([{ 
+                const { data: orderData, error } = await supabase.from('orders').insert([{ 
                     user_id: user.id, 
                     total: finalTotal, 
                     items: cart.map(item => ({ product_id: item.product_id, name: item.products.name, quantity: item.quantity, price: (item.products.sale_price || item.products.price) })),
-                    shipping_details: { ...shippingInfo, delivery_fee: selectedCityFee }
-                }]); 
+                    shipping_details: { ...shippingInfo, delivery_fee: selectedCityFee },
+                    applied_discount_code: appliedCoupon ? appliedCoupon.code : null,
+                    discount_amount: discountAmount
+                }]).select().single(); 
                 
                 if(error) { 
                     setNotification({type: 'error', messageKey: 'orderError'}); 
                     console.error(error); 
                 } else { 
+                    if (appliedCoupon && orderData) {
+                        await supabase.from('used_codes').insert({ code_id: appliedCoupon.id, user_id: user.id, order_id: orderData.id });
+                    }
                     const { error: deleteError } = await supabase.from('cart_items').delete().eq('user_id', user.id); 
                     if(deleteError) console.error(deleteError); 
                     setNotification({type: 'success', messageKey: 'orderSuccess'}); 
@@ -307,7 +363,15 @@
                                     <h2 className="text-xl font-bold">{t('orderSummary')}</h2>
                                     <div className="flex justify-between"><span>{t('subtotal')}</span><span>{subtotal.toFixed(2)} {t('currency')}</span></div>
                                     <div className="flex justify-between"><span>{t('deliveryFee')}</span><span>{selectedCityFee.toFixed(2)} {t('currency')}</span></div>
+                                     {appliedCoupon && <div className="flex justify-between text-green-600"><span>{t('discount')} ({appliedCoupon.code})</span><span>-{discountAmount.toFixed(2)} {t('currency')}</span></div>}
                                     <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2"><span>{t('finalTotal')}</span><span>{finalTotal.toFixed(2)} {t('currency')}</span></div>
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex gap-2">
+                                        <input type="text" value={couponCodeInput} onChange={e => setCouponCodeInput(e.target.value.toUpperCase())} placeholder={t('enterCoupon')} className="flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500" />
+                                        <button onClick={handleApplyCode} className="px-4 py-2 bg-gray-800 text-white font-semibold rounded-md hover:bg-gray-700">{t('applyCoupon')}</button>
+                                    </div>
+                                    {couponError && <p className="text-red-500 text-sm">{couponError}</p>}
                                 </div>
                                 <button onClick={handleCheckout} className="w-full mt-2 bg-pink-600 text-white font-bold py-2 rounded-lg hover:bg-pink-700 transition-colors">{t('completeOrder')}</button>
                             </div>
