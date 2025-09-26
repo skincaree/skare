@@ -44,12 +44,7 @@
             // لوحة التحكم
             adminPanel: "لوحة تحكم الأدمن", overview: "نظرة عامة", products: "المنتجات", categories: "الأقسام", users: "المستخدمون", analytics: "التحليلات", orders: "الطلبات", manageOrders: "إدارة الطلبات", orderStatus: "حالة الطلب", customerName: "اسم العميل", customerPhone: "هاتف العميل", city: "المدينة", newStatus: "جديد", shippedStatus: "تم الشحن", deliveredStatus: "تم التوصيل", updateStatus: "تحديث الحالة", orderDetails: "تفاصيل الطلب",
             manageProducts: "إدارة المنتجات", addProduct: "إضافة منتج جديد", productName: "اسم المنتج", productDesc: "وصف المنتج", price: "السعر", salePrice: "سعر العرض (اختياري)", imageUrl: "رابط الصورة", category: "القسم", save: "حفظ", cancel: "إلغاء", edit: "تعديل", delete: "حذف", confirmDelete: "هل أنت متأكد من الحذف؟", manageCategories: "إدارة الأقسام", addCategory: "إضافة قسم جديد", categoryName: "اسم القسم", manageUsers: "إدارة المستخدمين", userEmail: "البريد الإلكتروني", fullName: "الاسم الكامل", phone: "الهاتف", status: "الحالة", action: "الإجراء", block: "حظر", unblock: "إلغاء الحظر", active: "نشط", blocked: "محظور", salesAnalytics: "تحليلات المبيعات",
-            totalSalesCurrentPeriod: "إجمالي المبيعات (الفترة الحالية)",
-            resetAnalytics: "بدء دورة أرباح جديدة",
-            confirmResetAnalytics: "هل أنت متأكد أنك تريد بدء دورة أرباح جديدة؟ سيتم تصفير عداد المبيعات الحالي.",
-            resetSuccess: "تم بدء دورة جديدة بنجاح.",
-            resetError: "حدث خطأ أثناء بدء الدورة الجديدة.",
-            periodStartDate: "بداية الفترة الحالية:",
+            totalSales30d: "إجمالي المبيعات (آخر 30 يوم)",
             mostSold: "الأكثر مبيعاً", leastSold: "الأقل مبيعاً", topCustomers: "أفضل العملاء", salesByCategory: "المبيعات حسب القسم", smartTips: "نصائح ذكية", tip1: "منتج %s هو الأكثر مبيعاً، فكّر في عرضه بالصفحة الرئيسية.", tip2: "قسم %s لديه أقل مبيعات، قد تفيد إضافة عروض عليه.", tip3: "تهانينا! المبيعات ارتفعت هذا الشهر.", noData: "لا توجد بيانات كافية.",
             uploadImage: "اختر صورة المنتج...", noImageSelected: "لم يتم اختيار صورة."
           },
@@ -68,12 +63,7 @@
             // Admin Dashboard
             adminPanel: "Admin Panel", overview: "Overview", products: "Products", categories: "Categories", users: "Users", analytics: "Analytics", orders: "Orders", manageOrders: "Manage Orders", orderStatus: "Order Status", customerName: "Customer Name", customerPhone: "Customer Phone", city: "City", newStatus: "New", shippedStatus: "Shipped", deliveredStatus: "Delivered", updateStatus: "Update Status", orderDetails: "Order Details",
             manageProducts: "Manage Products", addProduct: "Add New Product", productName: "Product Name", productDesc: "Product Description", price: "Price", salePrice: "Sale Price (Optional)", imageUrl: "Image URL", category: "Category", save: "Save", cancel: "Cancel", edit: "Edit", delete: "Delete", confirmDelete: "Are you sure you want to delete?", manageCategories: "Manage Categories", addCategory: "Add New Category", categoryName: "Category Name", manageUsers: "Manage Users", userEmail: "Email", fullName: "Full Name", phone: "Phone", status: "Status", action: "Action", block: "Block", unblock: "Unblock", active: "Active", blocked: "Blocked", salesAnalytics: "Sales Analytics",
-            totalSalesCurrentPeriod: "Total Sales (Current Period)",
-            resetAnalytics: "Start New Profit Cycle",
-            confirmResetAnalytics: "Are you sure you want to start a new profit cycle? The current sales counter will be reset.",
-            resetSuccess: "New cycle started successfully.",
-            resetError: "Error starting new cycle.",
-            periodStartDate: "Current Period Start:",
+            totalSales30d: "Total Sales (Last 30 Days)",
             mostSold: "Most Sold Products", leastSold: "Least Sold Products", topCustomers: "Top Customers", salesByCategory: "Sales by Category", smartTips: "Smart Tips", tip1: "Product %s is a top seller. Consider featuring it on the homepage.", tip2: "Category %s has the lowest sales. A special offer might boost it.", tip3: "Congratulations! Sales have increased this month.", noData: "Not enough data available.",
             uploadImage: "Choose product image...", noImageSelected: "No image selected."
           }
@@ -538,8 +528,10 @@
         };
         const AnalyticsDashboard = ({ supabase, orders, products, categories, t, analyticsSettings, fetchAllData }) => {
             const analytics = useMemo(() => {
-                const resetDate = new Date(analyticsSettings.last_reset_date);
-                const ordersForPeriod = orders.filter(o => new Date(o.created_at) > resetDate);
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+                const ordersForPeriod = orders.filter(o => new Date(o.created_at) > thirtyDaysAgo);
                 
                 const totalSales = ordersForPeriod.reduce((sum, o) => sum + o.total, 0);
                 const productSales = {}; ordersForPeriod.forEach(o => { o.items?.forEach(item => { productSales[item.product_id] = (productSales[item.product_id] || 0) + item.quantity; }); });
@@ -547,36 +539,15 @@
                 const customerSales = {}; ordersForPeriod.forEach(o => { customerSales[o.user_id] = (customerSales[o.user_id] || 0) + o.total; }); const topCustomers = Object.entries(customerSales).sort(([, a], [, b]) => b - a).slice(0, 5);
                 const categorySales = {}; categories.forEach(c => categorySales[c.id] = { name: c.name, total: 0 }); ordersForPeriod.forEach(o => { o.items?.forEach(item => { const product = products.find(p => p.id === item.product_id); if (product && categorySales[product.category_id]) { categorySales[product.category_id].total += item.price * item.quantity; } }); });
                 return { totalSales, mostSold, leastSold, topCustomers, categorySales: Object.values(categorySales) };
-            }, [orders, products, categories, analyticsSettings]);
-
-            const handleResetAnalytics = async () => {
-                if (window.confirm(t('confirmResetAnalytics'))) {
-                    const { error } = await supabase
-                        .from('analytics_settings')
-                        .update({ last_reset_date: new Date().toISOString() })
-                        .eq('id', 1);
-
-                    if (!error) {
-                        alert(t('resetSuccess'));
-                        fetchAllData();
-                    } else {
-                        console.error("Error resetting analytics:", error);
-                        alert(t('resetError'));
-                    }
-                }
-            };
+            }, [orders, products, categories]);
 
             return ( 
               <div>
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold">{t('salesAnalytics')}</h2>
-                    <button onClick={handleResetAnalytics} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">{t('resetAnalytics')}</button>
-                </div>
+                <h2 className="text-2xl font-bold mb-4">{t('salesAnalytics')}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div className="bg-white p-6 rounded-lg shadow">
-                        <h3 className="font-bold text-gray-600">{t('totalSalesCurrentPeriod')}</h3>
+                        <h3 className="font-bold text-gray-600">{t('totalSales30d')}</h3>
                         <p className="text-3xl font-extrabold text-pink-600 mt-2">{analytics.totalSales.toFixed(2)} {t('currency')}</p>
-                        <p className="text-xs text-gray-500 mt-1">{t('periodStartDate')} {new Date(analyticsSettings.last_reset_date).toLocaleDateString()}</p>
                     </div>
                     <div className="bg-white p-6 rounded-lg shadow md:col-span-2"><h3 className="font-bold text-gray-600">{t('smartTips')}</h3><p className="text-lg text-indigo-700 mt-2">{useMemo(() => { if (analytics.mostSold.length > 0 && analytics.mostSold[0]?.name) return t('tip1').replace('%s', analytics.mostSold[0].name); const sortedCategories = [...analytics.categorySales].sort((a, b) => a.total - b.total); if(sortedCategories.length > 0 && sortedCategories[0].total === 0) return t('tip2').replace('%s', sortedCategories[0].name); return t('tip3'); }, [analytics])}</p></div>
                     <div className="bg-white p-6 rounded-lg shadow"><h3 className="font-bold text-gray-600">{t('mostSold')}</h3><ul className="mt-2 space-y-1">{analytics.mostSold.map(p => p.name && <li key={p.id} className="flex justify-between"><span>{p.name}</span> <span className="font-semibold">{p.quantity}</span></li>)}</ul></div>
