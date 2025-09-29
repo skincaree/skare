@@ -42,7 +42,7 @@
             bucketNotFound_admin: "خطأ: حاوية تخزين الصور 'products' غير موجودة. يرجى إنشائها من قسم Storage في لوحة تحكم Supabase.",
             shippingDetails: "معلومات التوصيل", selectCity: "ابحث عن مدينتك...", deliveryFee: "رسوم التوصيل", subtotal: "المجموع الفرعي", finalTotal: "المجموع النهائي", completeOrder: "تأكيد الطلب", pleaseFillShipping: "يرجى إكمال جميع بيانات التوصيل.",
             // أكواد الخصم
-            coupons: "أكواد الخصم", applyCoupon: "تطبيق", couponCode: "كود الخصم", enterCoupon: "أدخل كود الخصم...", couponApplied: "تم تطبيق الخصم بنجاح!", invalidCoupon: "كود الخصم غير صالح أو منتهي الصلاحية.", couponUserLimitReached: "لقد استخدمت هذا الكود الحد الأقصى من المرات.", couponTotalLimitReached: "انتهى استخدام هذا الكود.", discount: "الخصم", manageCoupons: "إدارة أكواد الخصم", addCoupon: "إضافة كود جديد", discountPercentage: "نسبة الخصم (%)", maxUsers: "أقصى عدد للمستخدمين", usesPerUser: "الاستخدام لكل مستخدم",
+            coupons: "أكواد الخصم", applyCoupon: "تطبيق", couponCode: "كود الخصم", enterCoupon: "أدخل كود الخصم...", couponApplied: "تم تطبيق الخصم بنجاح!", invalidCoupon: "كود الخصم غير صالح أو منتهي الصلاحية.", couponUserLimitReached: "لقد استخدمت هذا الكود الحد الأقصى من المرات.", couponTotalLimitReached: "انتهى استخدام هذا الكود.", discount: "الخصم", manageCoupons: "إدارة أكواد الخصم", addCoupon: "إضافة كود جديد", discountPercentage: "نسبة الخصم (%)", maxUsers: "الحد الأقصى للمستخدمين", usesPerUser: "الاستخدام لكل مستخدم",
             // لوحة التحكم
             adminPanel: "لوحة تحكم الأدمن", overview: "نظرة عامة", products: "المنتجات", categories: "الأقسام", users: "المستخدمون", analytics: "التحليلات", orders: "الطلبات", manageOrders: "إدارة الطلبات", orderStatus: "حالة الطلب", customerName: "اسم العميل", customerPhone: "هاتف العميل", city: "المدينة", newStatus: "جديد", shippedStatus: "تم الشحن", deliveredStatus: "تم التوصيل", updateStatus: "تحديث الحالة", orderDetails: "تفاصيل الطلب",
             manageProducts: "إدارة المنتجات", addProduct: "إضافة منتج جديد", productName: "اسم المنتج", productDesc: "وصف المنتج", price: "السعر", salePrice: "سعر العرض (اختياري)", imageUrl: "رابط الصورة", category: "القسم", save: "حفظ", cancel: "إلغاء", edit: "تعديل", delete: "حذف", confirmDelete: "هل أنت متأكد من الحذف؟", manageCategories: "إدارة الأقسام", addCategory: "إضافة قسم جديد", categoryName: "اسم القسم", manageUsers: "إدارة المستخدمين", userEmail: "البريد الإلكتروني", fullName: "الاسم الكامل", phone: "الهاتف", status: "الحالة", action: "الإجراء", block: "حظر", unblock: "إلغاء الحظر", active: "نشط", blocked: "محظور", salesAnalytics: "تحليلات المبيعات",
@@ -590,7 +590,7 @@
             const toggleBlockUser = async (user) => { const { error } = await supabase.from('profiles').update({ is_blocked: !user.is_blocked }).eq('id', user.id); if(!error) fetchUsers(); };
             return ( <div><h2 className="text-2xl font-bold mb-4">{t('manageUsers')}</h2><div className="bg-white shadow rounded-lg overflow-x-auto"><table className="min-w-full divide-y divide-gray-200"><thead className="bg-gray-50"><tr><th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('fullName')}</th><th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('userEmail')}</th><th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('status')}</th><th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('action')}</th></tr></thead><tbody className="bg-white divide-y divide-gray-200">{users.map(u => (<tr key={u.id}><td className="px-6 py-4 whitespace-nowrap">{u.full_name || 'N/A'}</td><td className="px-6 py-4 whitespace-nowrap">{u.email}</td><td className="px-6 py-4 whitespace-nowrap"><span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${u.is_blocked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>{u.is_blocked ? t('blocked') : t('active')}</span></td><td className="px-6 py-4 whitespace-nowrap"><button onClick={() => toggleBlockUser(u)} className={`px-4 py-2 text-sm rounded-lg text-white ${u.is_blocked ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}>{u.is_blocked ? t('unblock') : t('block')}</button></td></tr>))}</tbody></table></div></div> );
         };
-        const AnalyticsDashboard = ({ supabase, orders, products, categories, t, analyticsSettings, fetchAllData }) => {
+        const AnalyticsDashboard = ({ supabase, orders, products, categories, t }) => {
             const analytics = useMemo(() => {
                 const thirtyDaysAgo = new Date();
                 thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -621,7 +621,6 @@
               </div> 
             );
         };
-
         const OrderManagement = ({ supabase, orders, fetchAllData, t }) => {
             const [selectedOrder, setSelectedOrder] = useState(null);
 
@@ -698,22 +697,150 @@
                 </div>
             )
         };
+        const CouponManagement = ({ supabase, coupons, fetchAllData, t }) => {
+            const [showModal, setShowModal] = useState(false);
+            const [editingCoupon, setEditingCoupon] = useState(null);
+            const [formData, setFormData] = useState({
+                code: '',
+                discount_percentage: '',
+                max_users: '',
+                uses_per_user: '',
+                is_active: true
+            });
+
+            const handleOpenModal = (coupon = null) => {
+                setEditingCoupon(coupon);
+                setFormData(coupon ? { ...coupon } : {
+                    code: '',
+                    discount_percentage: '10',
+                    max_users: '100',
+                    uses_per_user: '1',
+                    is_active: true
+                });
+                setShowModal(true);
+            };
+
+            const handleSave = async (e) => {
+                e.preventDefault();
+                const dataToSubmit = {
+                    ...formData,
+                    code: formData.code.toUpperCase(),
+                    discount_percentage: parseInt(formData.discount_percentage, 10),
+                    max_users: parseInt(formData.max_users, 10),
+                    uses_per_user: parseInt(formData.uses_per_user, 10)
+                };
+
+                let error;
+                if (editingCoupon) {
+                    ({ error } = await supabase.from('discount_codes').update(dataToSubmit).eq('id', editingCoupon.id));
+                } else {
+                    ({ error } = await supabase.from('discount_codes').insert(dataToSubmit));
+                }
+
+                if (!error) {
+                    fetchAllData();
+                    setShowModal(false);
+                } else {
+                    console.error("Supabase error:", error);
+                    alert("Error saving coupon: " + error.message);
+                }
+            };
+
+            const handleDelete = async (couponId) => {
+                if (window.confirm(t('confirmDelete'))) {
+                    const { error } = await supabase.from('discount_codes').delete().eq('id', couponId);
+                    if (!error) fetchAllData();
+                    else console.error(error);
+                }
+            };
+            
+            const toggleActive = async (coupon) => {
+                const { error } = await supabase.from('discount_codes').update({ is_active: !coupon.is_active }).eq('id', coupon.id);
+                if(!error) fetchAllData();
+                else console.error(error);
+            };
+
+            return (
+                <div>
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-2xl font-bold">{t('manageCoupons')}</h2>
+                        <button onClick={() => handleOpenModal()} className="bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700">{t('addCoupon')}</button>
+                    </div>
+                    <div className="bg-white shadow rounded-lg overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('couponCode')}</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('discountPercentage')}</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('status')}</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action')}</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {coupons.map(c => (
+                                    <tr key={c.id}>
+                                        <td className="px-6 py-4 whitespace-nowrap font-mono">{c.code}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{c.discount_percentage}%</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <button onClick={() => toggleActive(c)} className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${c.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                {c.is_active ? t('active') : t('blocked')}
+                                            </button>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button onClick={() => handleOpenModal(c)} className="text-indigo-600 hover:text-indigo-900 ml-4">{t('edit')}</button>
+                                            <button onClick={() => handleDelete(c.id)} className="text-red-600 hover:text-red-900">{t('delete')}</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    {showModal && (
+                        <Modal onClose={() => setShowModal(false)}>
+                            <form onSubmit={handleSave} className="space-y-4">
+                                <h3 className="text-lg font-bold">{editingCoupon ? t('edit') : t('addCoupon')}</h3>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">{t('couponCode')}</label>
+                                    <input type="text" value={formData.code} onChange={e => setFormData({...formData, code: e.target.value.toUpperCase()})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" required />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">{t('discountPercentage')}</label>
+                                    <input type="number" min="1" max="100" value={formData.discount_percentage} onChange={e => setFormData({...formData, discount_percentage: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" required />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">{t('maxUsers')}</label>
+                                    <input type="number" min="1" value={formData.max_users} onChange={e => setFormData({...formData, max_users: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" required />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">{t('usesPerUser')}</label>
+                                    <input type="number" min="1" value={formData.uses_per_user} onChange={e => setFormData({...formData, uses_per_user: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" required />
+                                </div>
+                                <div className="flex justify-end gap-4">
+                                    <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-200 rounded">{t('cancel')}</button>
+                                    <button type="submit" className="px-4 py-2 bg-pink-600 text-white rounded">{t('save')}</button>
+                                </div>
+                            </form>
+                        </Modal>
+                    )}
+                </div>
+            );
+        };
 
         const AdminDashboard = ({ supabase, t, setNotification }) => { 
             const [adminPage, setAdminPage] = useState('orders'); const [products, setProducts] = useState([]); const [categories, setCategories] = useState([]); const [users, setUsers] = useState([]); const [orders, setOrders] = useState([]); const [loading, setLoading] = useState(true);
-            const [analyticsSettings, setAnalyticsSettings] = useState({ last_reset_date: new Date() });
+            const [coupons, setCoupons] = useState([]);
 
             const fetchAllData = async () => {
                 setLoading(true);
-                const [productsRes, categoriesRes, usersRes, ordersRes, settingsRes] = await Promise.all([ 
+                const [productsRes, categoriesRes, usersRes, ordersRes, couponsRes] = await Promise.all([ 
                     supabase.from('products').select('*'), 
                     supabase.from('categories').select('*'), 
                     supabase.rpc('get_all_users_with_profiles'),
                     supabase.from('orders').select('*').order('created_at', { ascending: false }),
-                    supabase.from('analytics_settings').select('*').single() 
+                    supabase.from('discount_codes').select('*')
                 ]);
                 setProducts(productsRes.data || []); setCategories(categoriesRes.data || []); setUsers(usersRes.data || []); setOrders(ordersRes.data || []); 
-                setAnalyticsSettings(settingsRes.data || { last_reset_date: new Date() });
+                setCoupons(couponsRes.data || []);
                 setLoading(false);
             };
             useEffect(() => { if(supabase) fetchAllData(); }, [supabase]);
@@ -724,11 +851,12 @@
                     case 'categories': return <CategoryManagement supabase={supabase} categories={categories} fetchAllData={fetchAllData} t={t} setNotification={setNotification} />;
                     case 'users': return <UserManagement supabase={supabase} users={users} fetchUsers={fetchAllData} t={t} />; 
                     case 'orders': return <OrderManagement supabase={supabase} orders={orders} fetchAllData={fetchAllData} t={t} />;
-                    case 'analytics': return <AnalyticsDashboard supabase={supabase} orders={orders} products={products} categories={categories} t={t} analyticsSettings={analyticsSettings} fetchAllData={fetchAllData}/>; 
+                    case 'analytics': return <AnalyticsDashboard supabase={supabase} orders={orders} products={products} categories={categories} t={t} />; 
+                    case 'coupons': return <CouponManagement supabase={supabase} coupons={coupons} fetchAllData={fetchAllData} t={t} />;
                     default: return <div>Welcome to the dashboard.</div> 
                 } 
             };
-            return ( <div className="container mx-auto p-4 sm:p-6 lg:p-8"><h1 className="text-3xl font-bold mb-6">{t('adminPanel')}</h1><div className="flex flex-col md:flex-row gap-8"><aside className="md:w-1/4"><nav className="flex flex-col space-y-2">{['orders', 'analytics', 'products', 'categories', 'users'].map(page => ( <button key={page} onClick={() => setAdminPage(page)} className={`w-full text-right px-4 py-2 rounded-lg font-semibold ${adminPage === page ? 'bg-pink-600 text-white' : 'bg-white hover:bg-pink-50'}`}>{t(page)}</button> ))}</nav></aside><main className="flex-grow md:w-3/4">{renderAdminPage()}</main></div></div> );
+            return ( <div className="container mx-auto p-4 sm:p-6 lg:p-8"><h1 className="text-3xl font-bold mb-6">{t('adminPanel')}</h1><div className="flex flex-col md:flex-row gap-8"><aside className="md:w-1/4"><nav className="flex flex-col space-y-2">{['orders', 'analytics', 'products', 'categories', 'users', 'coupons'].map(page => ( <button key={page} onClick={() => setAdminPage(page)} className={`w-full text-right px-4 py-2 rounded-lg font-semibold ${adminPage === page ? 'bg-pink-600 text-white' : 'bg-white hover:bg-pink-50'}`}>{t(page)}</button> ))}</nav></aside><main className="flex-grow md:w-3/4">{renderAdminPage()}</main></div></div> );
         };
 
         function App() {
