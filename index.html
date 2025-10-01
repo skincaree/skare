@@ -43,6 +43,7 @@
             shippingDetails: "معلومات التوصيل", selectCity: "ابحث عن مدينتك...", deliveryFee: "رسوم التوصيل", subtotal: "المجموع الفرعي", finalTotal: "المجموع النهائي", completeOrder: "تأكيد الطلب", pleaseFillShipping: "يرجى إكمال جميع بيانات التوصيل.",
             // أكواد الخصم
             coupons: "أكواد الخصم", applyCoupon: "تطبيق", couponCode: "كود الخصم", enterCoupon: "أدخل كود الخصم...", couponApplied: "تم تطبيق الخصم بنجاح!", invalidCoupon: "كود الخصم غير صالح أو منتهي الصلاحية.", couponUserLimitReached: "لقد استخدمت هذا الكود الحد الأقصى من المرات.", couponTotalLimitReached: "انتهى استخدام هذا الكود.", discount: "الخصم", manageCoupons: "إدارة أكواد الخصم", addCoupon: "إضافة كود جديد", discountPercentage: "نسبة الخصم (%)", maxUsers: "الحد الأقصى للمستخدمين", usesPerUser: "الاستخدام لكل مستخدم",
+            parentCategory: "القسم الرئيسي", selectParentCategory: "اختر القسم الرئيسي (اختياري)",
             // لوحة التحكم
             adminPanel: "لوحة تحكم الأدمن", overview: "نظرة عامة", products: "المنتجات", categories: "الأقسام", users: "المستخدمون", analytics: "التحليلات", orders: "الطلبات", manageOrders: "إدارة الطلبات", orderStatus: "حالة الطلب", customerName: "اسم العميل", customerPhone: "هاتف العميل", city: "المدينة", newStatus: "جديد", shippedStatus: "تم الشحن", deliveredStatus: "تم التوصيل", updateStatus: "تحديث الحالة", orderDetails: "تفاصيل الطلب",
             manageProducts: "إدارة المنتجات", addProduct: "إضافة منتج جديد", productName: "اسم المنتج", productDesc: "وصف المنتج", price: "السعر", salePrice: "سعر العرض (اختياري)", imageUrl: "رابط الصورة", category: "القسم", save: "حفظ", cancel: "إلغاء", edit: "تعديل", delete: "حذف", confirmDelete: "هل أنت متأكد من الحذف؟", manageCategories: "إدارة الأقسام", addCategory: "إضافة قسم جديد", categoryName: "اسم القسم", manageUsers: "إدارة المستخدمين", userEmail: "البريد الإلكتروني", fullName: "الاسم الكامل", phone: "الهاتف", status: "الحالة", action: "الإجراء", block: "حظر", unblock: "إلغاء الحظر", active: "نشط", blocked: "محظور", salesAnalytics: "تحليلات المبيعات",
@@ -64,6 +65,7 @@
             shippingDetails: "Shipping Details", selectCity: "Search for your city...", deliveryFee: "Delivery Fee", subtotal: "Subtotal", finalTotal: "Final Total", completeOrder: "Confirm Order", pleaseFillShipping: "Please complete all shipping details.",
             // Discount Codes
             coupons: "Discount Codes", applyCoupon: "Apply", couponCode: "Coupon Code", enterCoupon: "Enter coupon code...", couponApplied: "Coupon applied successfully!", invalidCoupon: "Invalid or expired coupon code.", couponUserLimitReached: "You have reached the usage limit for this coupon.", couponTotalLimitReached: "This coupon has reached its total usage limit.", discount: "Discount", manageCoupons: "Manage Coupons", addCoupon: "Add New Coupon", discountPercentage: "Discount Percentage (%)", maxUsers: "Max Users", usesPerUser: "Uses Per User",
+            parentCategory: "Parent Category", selectParentCategory: "Select Parent Category (Optional)",
             // Admin Dashboard
             adminPanel: "Admin Panel", overview: "Overview", products: "Products", categories: "Categories", users: "Users", analytics: "Analytics", orders: "Orders", manageOrders: "Manage Orders", orderStatus: "Order Status", customerName: "Customer Name", customerPhone: "Customer Phone", city: "City", newStatus: "New", shippedStatus: "Shipped", deliveredStatus: "Delivered", updateStatus: "Update Status", orderDetails: "Order Details",
             manageProducts: "Manage Products", addProduct: "Add New Product", productName: "Product Name", productDesc: "Product Description", price: "Price", salePrice: "Sale Price (Optional)", imageUrl: "Image URL", category: "Category", save: "Save", cancel: "Cancel", edit: "Edit", delete: "Delete", confirmDelete: "Are you sure you want to delete?", manageCategories: "Manage Categories", addCategory: "Add New Category", categoryName: "Category Name", manageUsers: "Manage Users", userEmail: "Email", fullName: "Full Name", phone: "Phone", status: "Status", action: "Action", block: "Block", unblock: "Unblock", active: "Active", blocked: "Blocked", salesAnalytics: "Sales Analytics",
@@ -174,11 +176,44 @@
         };
         
         const HomePage = ({ products, categories, selectedCategory, setSelectedCategory, searchTerm, onProductClick, onAddToCart, t }) => { 
+            const [openSubCategories, setOpenSubCategories] = useState({});
+
+            const categoryTree = useMemo(() => {
+                const tree = [];
+                const childrenOf = {};
+                categories.forEach(cat => {
+                    if (cat.parent_id) {
+                        if (!childrenOf[cat.parent_id]) {
+                            childrenOf[cat.parent_id] = [];
+                        }
+                        childrenOf[cat.parent_id].push(cat);
+                    } else {
+                        tree.push(cat);
+                    }
+                });
+                tree.forEach(cat => {
+                    cat.children = childrenOf[cat.id] || [];
+                });
+                return tree;
+            }, [categories]);
+
             const filteredProducts = useMemo(() => { 
+                if (selectedCategory === null) {
+                    return products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+                }
+                const selectedCat = categories.find(c => c.id === selectedCategory);
+                const childrenIds = selectedCat && categoryTree.find(c => c.id === (selectedCat.parent_id || selectedCat.id))
+                    ?.children.map(c => c.id) || [];
+                const categoryIdsToFilter = [selectedCategory, ...childrenIds];
+
                 return products
-                    .filter(p => selectedCategory === null || p.category_id === selectedCategory)
+                    .filter(p => categoryIdsToFilter.includes(p.category_id))
                     .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())); 
-            }, [products, searchTerm, selectedCategory]); 
+            }, [products, searchTerm, selectedCategory, categories, categoryTree]);
+
+            const toggleSubCategory = (categoryId) => {
+                setOpenSubCategories(prev => ({...prev, [categoryId]: !prev[categoryId]}));
+            };
 
             return ( 
                 <main className="container mx-auto p-6">
@@ -189,8 +224,17 @@
                     
                     <div className="flex justify-center flex-wrap gap-2 mb-8">
                         <button onClick={() => setSelectedCategory(null)} className={`px-4 py-2 rounded-full font-semibold transition-colors ${selectedCategory === null ? 'bg-pink-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>{t('allCategories')}</button>
-                        {categories.map(cat => (
-                             <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className={`px-4 py-2 rounded-full font-semibold transition-colors ${selectedCategory === cat.id ? 'bg-pink-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>{cat.name}</button>
+                        {categoryTree.map(cat => (
+                            <div key={cat.id} className="relative">
+                                <button onClick={() => { setSelectedCategory(cat.id); toggleSubCategory(cat.id);}} className={`px-4 py-2 rounded-full font-semibold transition-colors ${selectedCategory === cat.id ? 'bg-pink-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>{cat.name}</button>
+                                {cat.children.length > 0 && openSubCategories[cat.id] && (
+                                     <div className="flex flex-col mt-2 space-y-2">
+                                        {cat.children.map(child => (
+                                            <button key={child.id} onClick={(e) => { e.stopPropagation(); setSelectedCategory(child.id); }} className={`px-4 py-2 rounded-full font-semibold transition-colors text-sm ${selectedCategory === child.id ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>- {child.name}</button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         ))}
                     </div>
 
@@ -390,21 +434,44 @@
         const CategoryManagement = ({ supabase, categories, fetchAllData, t, setNotification }) => {
             const [showModal, setShowModal] = useState(false);
             const [editingCategory, setEditingCategory] = useState(null);
-            const [formData, setFormData] = useState({ name: '' });
+            const [formData, setFormData] = useState({ name: '', parent_id: null });
+
+            const categoryTree = useMemo(() => {
+                const tree = [];
+                const childrenOf = {};
+                categories.forEach(cat => {
+                    if (cat.parent_id) {
+                        if (!childrenOf[cat.parent_id]) {
+                            childrenOf[cat.parent_id] = [];
+                        }
+                        childrenOf[cat.parent_id].push(cat);
+                    } else {
+                        tree.push(cat);
+                    }
+                });
+                tree.forEach(cat => {
+                    cat.children = childrenOf[cat.id] || [];
+                });
+                return tree;
+            }, [categories]);
 
             const handleOpenModal = (category = null) => {
                 setEditingCategory(category);
-                setFormData(category ? { name: category.name } : { name: '' });
+                setFormData(category ? { name: category.name, parent_id: category.parent_id } : { name: '', parent_id: null });
                 setShowModal(true);
             };
 
             const handleSave = async (e) => {
                 e.preventDefault();
                 let error;
+                const dataToSubmit = {
+                    name: formData.name,
+                    parent_id: formData.parent_id === 'null' ? null : formData.parent_id
+                };
                 if (editingCategory) {
-                    ({ error } = await supabase.from('categories').update({ name: formData.name }).eq('id', editingCategory.id));
+                    ({ error } = await supabase.from('categories').update(dataToSubmit).eq('id', editingCategory.id));
                 } else {
-                    ({ error } = await supabase.from('categories').insert({ name: formData.name }));
+                    ({ error } = await supabase.from('categories').insert(dataToSubmit));
                 }
                 if (!error) {
                     fetchAllData();
@@ -416,12 +483,32 @@
 
             const handleDelete = async (categoryId) => {
                 if (window.confirm(t('confirmDelete'))) {
+                    // The database will now handle unlinking products and child categories automatically via 'ON DELETE SET NULL'
                     const { error } = await supabase.from('categories').delete().eq('id', categoryId);
-                    if (!error) fetchAllData();
-                    else console.error(error);
+                    if (error) {
+                        console.error("Error deleting category:", error);
+                        alert('حدث خطأ أثناء حذف القسم: ' + error.message);
+                    } else {
+                        fetchAllData();
+                    }
                 }
             };
             
+            const renderCategoryRow = (cat, level = 0) => {
+                return (
+                    <React.Fragment key={cat.id}>
+                        <tr>
+                            <td className="px-6 py-4 whitespace-nowrap" style={{ paddingLeft: `${level * 20}px` }}>{level > 0 && '- '}{cat.name}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button onClick={() => handleOpenModal(cat)} className="text-indigo-600 hover:text-indigo-900 ml-4">{t('edit')}</button>
+                                <button onClick={() => handleDelete(cat.id)} className="text-red-600 hover:text-red-900">{t('delete')}</button>
+                            </td>
+                        </tr>
+                        {cat.children && cat.children.map(child => renderCategoryRow(child, level + 1))}
+                    </React.Fragment>
+                );
+            };
+
             return (
                  <div>
                     <div className="flex justify-between items-center mb-4">
@@ -437,15 +524,7 @@
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {categories.map(c => (
-                                    <tr key={c.id}>
-                                        <td className="px-6 py-4 whitespace-nowrap">{c.name}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <button onClick={() => handleOpenModal(c)} className="text-indigo-600 hover:text-indigo-900 ml-4">{t('edit')}</button>
-                                            <button onClick={() => handleDelete(c.id)} className="text-red-600 hover:text-red-900">{t('delete')}</button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {categoryTree.map(cat => renderCategoryRow(cat))}
                             </tbody>
                         </table>
                     </div>
@@ -453,7 +532,11 @@
                         <Modal onClose={() => setShowModal(false)}>
                             <form onSubmit={handleSave} className="space-y-4">
                                 <h3 className="text-lg font-bold">{editingCategory ? t('edit') : t('addCategory')}</h3>
-                                <input type="text" placeholder={t('categoryName')} value={formData.name} onChange={e => setFormData({ name: e.target.value })} className="w-full p-2 border rounded" required />
+                                <input type="text" placeholder={t('categoryName')} value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-2 border rounded" required />
+                                <select value={formData.parent_id || 'null'} onChange={e => setFormData({...formData, parent_id: e.target.value})} className="w-full p-2 border rounded">
+                                    <option value='null'>{t('selectParentCategory')}</option>
+                                    {categories.filter(c => !c.parent_id && c.id !== editingCategory?.id).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                </select>
                                 <div className="flex justify-end gap-4">
                                     <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-200 rounded">{t('cancel')}</button>
                                     <button type="submit" className="px-4 py-2 bg-pink-600 text-white rounded">{t('save')}</button>
@@ -524,7 +607,20 @@
                     console.error("Supabase error:", error);
                 }
             };
-            const handleDelete = async (productId) => { if(window.confirm(t('confirmDelete'))) { const { error } = await supabase.from('products').delete().eq('id', productId); if(!error) fetchProducts(); else console.error(error); } };
+            const handleDelete = async (productId) => { 
+                if(window.confirm(t('confirmDelete'))) { 
+                    const { error } = await supabase
+                        .from('products')
+                        .delete()
+                        .eq('id', productId); 
+                    if(!error) {
+                        fetchProducts(); 
+                    } else {
+                        console.error("Error deleting product:", error);
+                        alert('حدث خطأ أثناء حذف المنتج: ' + error.message);
+                    }
+                } 
+            };
             
             return ( 
                 <div>
